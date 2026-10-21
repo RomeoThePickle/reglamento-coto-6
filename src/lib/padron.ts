@@ -1,6 +1,6 @@
-import { PLAZO_DIAS } from "./config";
+import { ultimoDiaPlazo } from "./plazo";
 import { supabaseAdmin } from "./supabase-admin";
-import type { Comprobante } from "./tipos";
+import type { Comprobante, Plazo } from "./tipos";
 import { normalizarCasa, normalizarIniciales } from "./validacion";
 
 export type Propietario = { id: number; numeroCasa: string; iniciales: string };
@@ -42,32 +42,76 @@ export async function validarPropietario(datos: Record<string, unknown>): Promis
   return { ok: true, propietario: { id: data.id, numeroCasa, iniciales } };
 }
 
-/** Aceptación previa de este propietario para esta versión del reglamento, si existe. */
-export async function buscarAceptacion(
+/**
+ * Registra que el propietario aceptó los términos del plazo. Solo se guarda la
+ * primera aceptación de cada versión; en ingresos posteriores se devuelve esa.
+ */
+export async function registrarAceptacion(
   propietario: Propietario,
   version: string,
-): Promise<Comprobante | null> {
-  const { data, error } = await supabaseAdmin()
+  userAgent: string | null,
+): Promise<Comprobante> {
+  const db = supabaseAdmin();
+
+  const { data: previa, error } = await db
     .from("aceptaciones")
     .select("id, aceptado_en")
     .eq("propietario_id", propietario.id)
     .eq("version_reglamento", version)
     .maybeSingle();
   if (error) throw error;
-  return data && comprobante(propietario, data);
+  if (previa) return comprobante(previa);
+
+  const { data: nueva, error: errorAlta } = await db
+    .from("aceptaciones")
+    .insert({
+      propietario_id: propietario.id,
+      iniciales: propietario.iniciales,
+      numero_casa: propietario.numeroCasa,
+      version_reglamento: version,
+      user_agent: userAgent?.slice(0, 500) ?? null,
+    })
+    .select("id, aceptado_en")
+    .single();
+  // Doble envío simultáneo: el índice único ya guardó el primero.
+  if (errorAlta?.code === "23505") return registrarAceptacion(propietario, version, userAgent);
+  if (errorAlta) throw errorAlta;
+  return comprobante(nueva);
 }
 
-export function comprobante(
-  propietario: Propietario,
-  fila: { id: number; aceptado_en: string },
-): Comprobante {
-  const aceptadoEn = new Date(fila.aceptado_en);
-  const fechaLimite = new Date(aceptadoEn.getTime() + PLAZO_DIAS * 24 * 60 * 60 * 1000);
-  return {
-    folio: fila.id,
-    numeroCasa: propietario.numeroCasa,
-    iniciales: propietario.iniciales,
-    aceptadoEn: aceptadoEn.toISOString(),
-    fechaLimite: fechaLimite.toISOString(),
-  };
+function comprobante(fila: { id: number; aceptado_en: string }): Comprobante {
+  return { folio: fila.id, aceptadoEn: new Date(fila.aceptado_en).toISOString() };
+}
+
+/**
+ * Registra el ingreso del propietario. El primer ingreso a cada versión del
+ * reglamento fija el inicio de su plazo; los siguientes solo actualizan el último.
+ */
+export async function registrarIngreso(propietario: Propietario, version: string): Promise<Plazo> {
+  const db = supabaseAdmin();
+
+  const { data: existente, error } = await db
+    .from("ingresos")
+    .update({ ultimo_ingreso: new Date().toISOString() })
+    .eq("propietario_id", propietario.id)
+    .eq("version_reglamento", version)
+    .select("primer_ingreso")
+    .maybeSingle();
+  if (error) throw error;
+  if (existente) return plazo(existente.primer_ingreso, false);
+
+  const { data: nuevo, error: errorAlta } = await db
+    .from("ingresos")
+    .insert({ propietario_id: propietario.id, version_reglamento: version })
+    .select("primer_ingreso")
+    .single();
+  // Dos ingresos simultáneos: el otro ya creó la fila, se toma esa.
+  if (errorAlta?.code === "23505") return registrarIngreso(propietario, version);
+  if (errorAlta) throw errorAlta;
+  return plazo(nuevo.primer_ingreso, true);
+}
+
+function plazo(primerIngreso: string, esPrimerIngreso: boolean): Plazo {
+  const fecha = new Date(primerIngreso);
+  return { primerIngreso: fecha.toISOString(), ultimoDia: ultimoDiaPlazo(fecha), esPrimerIngreso };
 }

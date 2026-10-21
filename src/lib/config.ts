@@ -7,7 +7,12 @@ export const PLAZO_DIAS = 10;
 
 export const ZONA_HORARIA = "America/Mexico_City";
 
+/** Casilla obligatoria en la pantalla de identificación. */
 export const TEXTO_ACEPTACION =
-  `He leído el Reglamento Interno del ${NOMBRE_COTO} y acepto que cuento con un ` +
-  `plazo de ${PLAZO_DIAS} días naturales, contados a partir de hoy, para presentar ` +
-  `por escrito ante la Mesa Directiva cualquier queja formal o sugerencia sobre su contenido.`;
+  `Acepto que, a partir de mi primer ingreso a este sitio, cuento con un plazo de ${PLAZO_DIAS} ` +
+  `días naturales para leer el Reglamento Interno del ${NOMBRE_COTO} y presentar por escrito ` +
+  `ante la Mesa Directiva los comentarios y/o sugerencias que considere pertinentes. De no ` +
+  `hacerlo dentro de dicho plazo, acepto el reglamento en los términos en que se encuentra redactado.`;
+
+export const AVISO_SIN_RECEPCION =
+  "Este sitio no recibe comentarios ni sugerencias. Entrégalos por escrito directamente a la Mesa Directiva.";
