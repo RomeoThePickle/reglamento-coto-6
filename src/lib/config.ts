@@ -9,10 +9,9 @@ export const ZONA_HORARIA = "America/Mexico_City";
 
 /** Casilla obligatoria en la pantalla de identificación. */
 export const TEXTO_ACEPTACION =
-  `Acepto que, a partir de mi primer ingreso a este sitio, cuento con un plazo de ${PLAZO_DIAS} ` +
-  `días naturales para leer el Reglamento Interno del ${NOMBRE_COTO} y presentar por escrito ` +
-  `ante la Mesa Directiva los comentarios y/o sugerencias que considere pertinentes. De no ` +
-  `hacerlo dentro de dicho plazo, acepto el reglamento en los términos en que se encuentra redactado.`;
+  `Acepto los términos y condiciones del reglamento que se me da a conocer,` + 
+  `manifestando que tengo 10 dias naturales para emitir por escrito mis opiniones` +
+  `en contra de este mismo reglamento en las oficinas del administrador`;
 
 export const AVISO_SIN_RECEPCION =
-  "Este sitio no recibe comentarios ni sugerencias. Entrégalos por escrito directamente a la Mesa Directiva.";
+  "Este sitio no recibe comentarios ni sugerencias. Entrégalos por escrito directamente al Consejo Administrativo del condominio Jardín de los Reyes.";
