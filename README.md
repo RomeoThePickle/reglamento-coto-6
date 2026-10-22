@@ -3,6 +3,9 @@
 Aplicación web que muestra el reglamento (PDF) y registra que cada propietario lo leyó y
 aceptó el plazo de 10 días para presentar quejas o sugerencias.
 
+**El sitio no recibe quejas ni sugerencias.** Solo informa el plazo; los propietarios deben
+entregarlas por escrito a la Mesa Directiva.
+
 - **Frontend y API:** Next.js en Vercel.
 - **Base de datos:** Supabase (tabla `aceptaciones`).
 - **Padrón:** Supabase (tabla `propietarios`, se llena a mano).
@@ -10,16 +13,29 @@ aceptó el plazo de 10 días para presentar quejas o sugerencias.
 
 ## Cómo funciona
 
-1. El propietario escribe sus iniciales y su número de casa. El servidor busca esa combinación en
-   la tabla `propietarios`; si no existe, no puede continuar.
-2. Si coincide, el servidor entrega un enlace temporal (1 hora) al PDF y el reglamento se muestra
-   página por página dentro del sitio (también funciona en celulares).
-3. Al llegar al final del documento se habilita la casilla de aceptación del plazo de 10 días.
-4. El servidor vuelve a validar al propietario, guarda el registro con la fecha y la versión del
-   PDF, y muestra un folio con la fecha límite del plazo.
+1. En la primera pantalla, el propietario escribe sus iniciales y su número de casa, y marca la
+   casilla de aceptación (obligatoria):
 
-Cada propietario solo puede aceptar una vez cada versión del reglamento. Si vuelve a entrar, ve su
-comprobante original: el plazo no se reinicia.
+   > Acepto que, a partir de mi primer ingreso a este sitio, cuento con un plazo de 10 días
+   > naturales para leer el Reglamento Interno del Coto 6 y presentar por escrito ante la Mesa
+   > Directiva los comentarios y/o sugerencias que considere pertinentes. De no hacerlo dentro de
+   > dicho plazo, acepto el reglamento en los términos en que se encuentra redactado.
+
+2. El servidor busca la combinación casa + iniciales en la tabla `propietarios`; si no existe, no
+   puede continuar. Si coincide, registra su ingreso (`ingresos`) y su aceptación
+   (`aceptaciones`), y entrega un enlace temporal (1 hora) al PDF.
+3. Se muestra cuántos días le quedan, el folio de su aceptación y el reglamento página por página
+   (también funciona en celulares).
+
+### El plazo de 10 días
+
+- Corre desde el **primer ingreso** del propietario a cada versión del reglamento, no desde que
+  acepta. Esa fecha se guarda una sola vez y no cambia aunque vuelva a entrar.
+- Son días naturales y el último día cuenta completo (hora de `America/Mexico_City`): si entró
+  el 21 de octubre a cualquier hora, tiene hasta el 31 de octubre a las 23:59.
+- En cada ingreso se muestra "Te quedan N días", "Hoy es tu último día" o "Tu plazo venció".
+- Solo se guarda la primera aceptación de cada propietario por versión. Si vuelve a entrar, debe
+  marcar la casilla de nuevo, pero se le muestra el folio original.
 
 Las tablas tienen RLS activado sin políticas: solo el servidor (con la llave secreta) puede leer o
 escribir. Nadie puede consultar el padrón ni las aceptaciones desde el navegador.
@@ -94,15 +110,19 @@ Estado de cada propietario para la versión vigente:
 
 ```sql
 select p.numero_casa, p.iniciales, p.nombre,
-       a.aceptado_en at time zone 'America/Mexico_City' as fecha_aceptacion,
-       (a.aceptado_en + interval '10 days') at time zone 'America/Mexico_City' as fecha_limite
+       i.primer_ingreso at time zone 'America/Mexico_City' as primer_ingreso,
+       (i.primer_ingreso at time zone 'America/Mexico_City')::date + 10 as ultimo_dia_plazo,
+       a.aceptado_en at time zone 'America/Mexico_City' as fecha_aceptacion
 from propietarios p
+left join ingresos i
+  on i.propietario_id = p.id and i.version_reglamento = 'reglamento-2026-10.pdf'
 left join aceptaciones a
   on a.propietario_id = p.id and a.version_reglamento = 'reglamento-2026-10.pdf'
-order by a.aceptado_en is not null, p.numero_casa;
+order by p.numero_casa;
 ```
 
-Los propietarios con `fecha_aceptacion` vacía aún no han aceptado.
+Si `primer_ingreso` está vacío, el propietario no ha entrado (su plazo aún no corre). Si
+`fecha_aceptacion` está vacía, no ha aceptado.
 
 ## Textos
 

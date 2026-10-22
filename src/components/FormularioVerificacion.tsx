@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { TEXTO_ACEPTACION } from "@/lib/config";
 import type { Sesion } from "@/lib/tipos";
 import { normalizarCasa, normalizarIniciales } from "@/lib/validacion";
 
@@ -9,6 +10,7 @@ type Props = { onVerificado: (sesion: Sesion) => void };
 export default function FormularioVerificacion({ onVerificado }: Props) {
   const [iniciales, setIniciales] = useState("");
   const [numeroCasa, setNumeroCasa] = useState("");
+  const [acepta, setAcepta] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -30,7 +32,7 @@ export default function FormularioVerificacion({ onVerificado }: Props) {
       const res = await fetch("/api/verificar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ iniciales, numeroCasa }),
+        body: JSON.stringify({ iniciales, numeroCasa, aceptaPlazo: acepta }),
       });
       const datos = await res.json();
       if (!res.ok) throw new Error(datos.error ?? "Ocurrió un error inesperado.");
@@ -54,7 +56,7 @@ export default function FormularioVerificacion({ onVerificado }: Props) {
       <h2 className="text-lg font-semibold">Identifícate como propietario</h2>
       <p className="mt-1 text-sm text-stone-600">
         Escribe las iniciales del propietario y el número de casa tal como están registrados en el
-        padrón del coto.
+        padrón del coto, y acepta los términos para consultar el reglamento.
       </p>
 
       <fieldset disabled={enviando} className="mt-5 space-y-5">
@@ -90,6 +92,17 @@ export default function FormularioVerificacion({ onVerificado }: Props) {
           </label>
         </div>
 
+        <label className="flex items-start gap-3 rounded-md border border-stone-200 bg-stone-50 p-4">
+          <input
+            type="checkbox"
+            checked={acepta}
+            onChange={(e) => setAcepta(e.target.checked)}
+            required
+            className="mt-1 size-5 shrink-0 accent-stone-900"
+          />
+          <span className="text-[15px] leading-relaxed">{TEXTO_ACEPTACION}</span>
+        </label>
+
         {error && (
           <p role="alert" className="text-sm text-red-700">
             {error}
@@ -100,7 +113,7 @@ export default function FormularioVerificacion({ onVerificado }: Props) {
           type="submit"
           className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white hover:bg-stone-800 disabled:opacity-50 sm:w-auto"
         >
-          {enviando ? "Verificando…" : "Continuar al reglamento"}
+          {enviando ? "Verificando…" : "Aceptar y ver el reglamento"}
         </button>
       </fieldset>
     </form>

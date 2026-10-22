@@ -12,18 +12,14 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 type Props = {
   url: string;
-  /** Se llama una vez, cuando la persona llega al final del documento. */
-  onFinalAlcanzado: () => void;
   /** El navegador no pudo mostrar el PDF; la página ofrece abrirlo aparte. */
   onError: () => void;
 };
 
-export default function VisorPdf({ url, onFinalAlcanzado, onError }: Props) {
+export default function VisorPdf({ url, onError }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
-  const finalRef = useRef<HTMLDivElement>(null);
   const [ancho, setAncho] = useState<number>();
   const [numPaginas, setNumPaginas] = useState(0);
-  const [renderizadas, setRenderizadas] = useState(0);
 
   useEffect(() => {
     const el = contenedorRef.current;
@@ -32,21 +28,6 @@ export default function VisorPdf({ url, onFinalAlcanzado, onError }: Props) {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-
-  // Solo se observa el final cuando todas las páginas ya tienen su altura real;
-  // antes de eso el marcador estaría visible desde el inicio.
-  const listo = numPaginas > 0 && renderizadas >= numPaginas;
-  useEffect(() => {
-    if (!listo || !finalRef.current) return;
-    const obs = new IntersectionObserver(([entrada]) => {
-      if (entrada.isIntersecting) {
-        onFinalAlcanzado();
-        obs.disconnect();
-      }
-    });
-    obs.observe(finalRef.current);
-    return () => obs.disconnect();
-  }, [listo, onFinalAlcanzado]);
 
   return (
     <div ref={contenedorRef} className="w-full">
@@ -64,12 +45,10 @@ export default function VisorPdf({ url, onFinalAlcanzado, onError }: Props) {
               pageNumber={i + 1}
               width={ancho}
               className="mb-4 overflow-hidden rounded-md shadow-sm ring-1 ring-stone-200"
-              onRenderSuccess={() => setRenderizadas((n) => n + 1)}
               loading={<div style={{ height: ancho * 1.29 }} className="bg-white" />}
             />
           ))}
       </Document>
-      <div ref={finalRef} aria-hidden className="h-px" />
     </div>
   );
 }

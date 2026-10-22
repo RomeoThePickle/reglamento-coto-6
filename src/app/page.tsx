@@ -8,8 +8,8 @@ export default function Home() {
         <p className="text-sm font-medium tracking-wide text-stone-500 uppercase">{NOMBRE_COTO}</p>
         <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Reglamento Interno</h1>
         <p className="mt-3 text-stone-600">
-          Identifícate como propietario para consultar el reglamento. Al terminar de leerlo,
-          confirma tu lectura al final de la página.
+          Identifícate como propietario y acepta los términos del plazo para comentarios y
+          sugerencias. Después podrás consultar el reglamento completo.
         </p>
       </header>
 
