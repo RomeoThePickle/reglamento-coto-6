@@ -41,7 +41,7 @@ export default function AvisoPlazo({ plazo, aceptacion }: Props) {
           </>
         ) : (
           <>
-            para leer el reglamento y presentar por escrito ante el Consejo Administrativo del condominio Jardin de los Reyes tus comentarios
+            para leer el reglamento y presentar por escrito ante el Consejo Administrativo del condominio Jardín de los Reyes tus comentarios
             y/o sugerencias. Tienes hasta el <strong>{ultimoDia}</strong>; de lo contrario, el
             reglamento quedará aceptado en los términos en que se encuentra redactado.
           </>
