@@ -9,8 +9,8 @@ export const ZONA_HORARIA = "America/Mexico_City";
 
 /** Casilla obligatoria en la pantalla de identificación. */
 export const TEXTO_ACEPTACION =
-  `Acepto los términos y condiciones del reglamento que se me da a conocer,` + 
-  `manifestando que tengo 10 dias naturales para emitir por escrito mis opiniones` +
+  `Acepto los términos y condiciones del reglamento que se me da a conocer, ` + 
+  `manifestando que tengo 10 días naturales para emitir por escrito mis opiniones ` +
   `en contra de este mismo reglamento en las oficinas del administrador`;
 
 export const AVISO_SIN_RECEPCION =
